@@ -34,6 +34,8 @@ export default function MosaicDesigner() {
   const [colorCodeType, setColorCodeType] = useState('NCS');
   const [isDragging, setIsDragging] = useState(false);
   const [isPatternDragging, setIsPatternDragging] = useState(false);
+  const [previousMosaicPattern, setPreviousMosaicPattern] = useState(null);
+  const [previousPatternGrid, setPreviousPatternGrid] = useState(null);
   
   // Performance optimization refs
   const animationFrameRef = useRef(null);
@@ -374,6 +376,9 @@ export default function MosaicDesigner() {
   }
 
   function handlePatternMouseDown(row, col) {
+    // Save current state before making changes
+    setPreviousPatternGrid(patternGrid.map(row => [...row]));
+    
     setIsPatternDragging(true);
     colorPatternTile(row, col);
   }
@@ -386,6 +391,24 @@ export default function MosaicDesigner() {
 
   function handlePatternMouseUp() {
     setIsPatternDragging(false);
+  }
+
+  function undoLastMosaicPaint() {
+    if (previousMosaicPattern && mosaicDataRef.current) {
+      mosaicDataRef.current = {
+        ...mosaicDataRef.current,
+        pattern: previousMosaicPattern
+      };
+      drawMosaicFromData(mosaicDataRef.current);
+      setPreviousMosaicPattern(null); // Clear the undo state after using it
+    }
+  }
+
+  function undoLastPatternPaint() {
+    if (previousPatternGrid) {
+      setPatternGrid(previousPatternGrid);
+      setPreviousPatternGrid(null); // Clear the undo state after using it
+    }
   }
   
   function colorTileAtPosition(x, y) {
@@ -452,6 +475,9 @@ export default function MosaicDesigner() {
 
   function handleMouseDown(event) {
     if (!isEditMode || !mosaicDataRef.current) return;
+    
+    // Save current state before making changes
+    setPreviousMosaicPattern(mosaicDataRef.current.pattern.map(row => [...row]));
     
     const canvas = previewRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -763,6 +789,23 @@ export default function MosaicDesigner() {
                   <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
                     Symmetry ({symmetryType}) will be applied when coloring tiles
                   </div>
+                  {previousMosaicPattern && (
+                    <button
+                      onClick={undoLastMosaicPaint}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        borderRadius: '4px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        marginTop: '8px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Undo Last Paint
+                    </button>
+                  )}
                 </div>
               )}
               
@@ -1079,7 +1122,25 @@ export default function MosaicDesigner() {
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <div>Click tiles to color them:</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span>Click tiles to color them:</span>
+                {previousPatternGrid && (
+                  <button
+                    onClick={undoLastPatternPaint}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#dc2626',
+                      color: 'white',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Undo Last Paint
+                  </button>
+                )}
+              </div>
               <div 
                 style={{
                   display: 'inline-block',
