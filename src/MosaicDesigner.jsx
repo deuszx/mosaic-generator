@@ -1,4 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import { ncsToHex } from './colorCodes/ncsColors';
+import { ralToHex } from './colorCodes/ralColors';
 
 export default function MosaicDesigner() {
   const previewRef = useRef(null);
@@ -24,6 +26,12 @@ export default function MosaicDesigner() {
   const [selectedPatternColor, setSelectedPatternColor] = useState(0);
   const [patternSymmetryType, setPatternSymmetryType] = useState('none');
   const [tempPalette, setTempPalette] = useState([]);
+  const [selectedMainColor, setSelectedMainColor] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showColorCodeModal, setShowColorCodeModal] = useState(false);
+  const [selectedTileForColorCode, setSelectedTileForColorCode] = useState(null);
+  const [colorCodeInput, setColorCodeInput] = useState('');
+  const [colorCodeType, setColorCodeType] = useState('NCS');
   
   // Performance optimization refs
   const animationFrameRef = useRef(null);
@@ -49,6 +57,39 @@ export default function MosaicDesigner() {
       setTempPalette([...customPalette]);
     }
   }, [showPatternModal, customPalette]);
+  
+  // Color code conversion functions - now using imported functions
+  
+  const convertColorCode = (code, type) => {
+    if (type === 'NCS') {
+      return ncsToHex(code);
+    } else if (type === 'RAL') {
+      return ralToHex(code);
+    }
+    return null;
+  };
+  
+  const handleColorCodeSubmit = () => {
+    const hexColor = convertColorCode(colorCodeInput, colorCodeType);
+    if (hexColor && selectedTileForColorCode !== null) {
+      if (showPatternModal) {
+        // Update temp palette for pattern designer
+        const newTempPalette = [...tempPalette];
+        newTempPalette[selectedTileForColorCode] = hexColor;
+        setTempPalette(newTempPalette);
+      } else {
+        // Update main palette
+        const newPalette = [...customPalette];
+        newPalette[selectedTileForColorCode] = hexColor;
+        setCustomPalette(newPalette);
+      }
+      setShowColorCodeModal(false);
+      setColorCodeInput('');
+      setSelectedTileForColorCode(null);
+    } else {
+      alert(`Invalid ${colorCodeType} color code. Please check the code and try again.`);
+    }
+  };
 
   // Redraw function needs to be defined before useEffect
   const redrawExistingMosaic = useCallback(() => {
@@ -203,10 +244,17 @@ export default function MosaicDesigner() {
         const tileY = y * (tilePx + groutPx) + groutPx;
         
         ctx.fillRect(tileX, tileY, tilePx, tilePx);
+        
+        // Add subtle border in edit mode for better tile visibility
+        if (isEditMode) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(tileX, tileY, tilePx, tilePx);
+        }
       }
     }
     
-    // Apply scaling to fit viewport
+      // Apply scaling to fit viewport
     const scale = calculateScaleFactor(canvasWidth, canvasHeight);
     if (scale < 1) {
       previewRef.current.style.transform = `scale(${scale})`;
@@ -237,7 +285,7 @@ export default function MosaicDesigner() {
       
       // Vertical lines
       for (let x = 0; x <= cols; x++) {
-        const lineX = x * (tilePx + groutPx) + groutPx / 2;
+        const lineX = x * tilePx + (x + 1) * groutPx - groutPx / 2;
         ctx.beginPath();
         ctx.moveTo(lineX, 0);
         ctx.lineTo(lineX, canvasHeight);
@@ -246,7 +294,7 @@ export default function MosaicDesigner() {
       
       // Horizontal lines
       for (let y = 0; y <= rows; y++) {
-        const lineY = y * (tilePx + groutPx) + groutPx / 2;
+        const lineY = y * tilePx + (y + 1) * groutPx - groutPx / 2;
         ctx.beginPath();
         ctx.moveTo(0, lineY);
         ctx.lineTo(canvasWidth, lineY);
@@ -317,6 +365,62 @@ export default function MosaicDesigner() {
     }
     
     setPatternGrid(newGrid);
+  }
+  
+  function handleMainTileClick(event) {
+    if (!isEditMode || !mosaicDataRef.current) return;
+    
+    const canvas = previewRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scale = parseFloat(canvas.style.transform.match(/scale\(([^)]+)\)/)?.[1]) || 1;
+    
+    const x = (event.clientX - rect.left) / scale;
+    const y = (event.clientY - rect.top) / scale;
+    
+    const data = mosaicDataRef.current;
+    const tilePx = data.tileSizeCm * CM_TO_PX;
+    const groutPx = groutWidth * CM_TO_PX;
+    
+    // Calculate which tile was clicked
+    const tileCol = Math.floor((x - groutPx) / (tilePx + groutPx));
+    const tileRow = Math.floor((y - groutPx) / (tilePx + groutPx));
+    
+    // Check if click is within valid tile bounds
+    if (tileCol >= 0 && tileCol < data.cols && tileRow >= 0 && tileRow < data.rows) {
+      // Check if click is actually on a tile (not on grout)
+      const tileX = tileCol * (tilePx + groutPx) + groutPx;
+      const tileY = tileRow * (tilePx + groutPx) + groutPx;
+      
+      if (x >= tileX && x <= tileX + tilePx && y >= tileY && y <= tileY + tilePx) {
+        // Update the pattern with symmetry
+        const newPattern = data.pattern.map(row => [...row]);
+        newPattern[tileRow][tileCol] = selectedMainColor;
+        
+        // Apply symmetry if enabled
+        if (symmetryType === 'horizontal') {
+          const mirrorCol = data.cols - 1 - tileCol;
+          newPattern[tileRow][mirrorCol] = selectedMainColor;
+        } else if (symmetryType === 'vertical') {
+          const mirrorRow = data.rows - 1 - tileRow;
+          newPattern[mirrorRow][tileCol] = selectedMainColor;
+        } else if (symmetryType === 'central') {
+          const mirrorCol = data.cols - 1 - tileCol;
+          const mirrorRow = data.rows - 1 - tileRow;
+          newPattern[tileRow][mirrorCol] = selectedMainColor;
+          newPattern[mirrorRow][tileCol] = selectedMainColor;
+          newPattern[mirrorRow][mirrorCol] = selectedMainColor;
+        }
+        
+        // Update stored data
+        mosaicDataRef.current = {
+          ...data,
+          pattern: newPattern
+        };
+        
+        // Redraw
+        drawMosaicFromData(mosaicDataRef.current);
+      }
+    }
   }
   
   function generateSymmetricPattern() {
@@ -465,8 +569,8 @@ export default function MosaicDesigner() {
             </div>
             <div style={{ marginTop: '12px' }}>
               {Array.from({ length: tileCount }, (_, i) => (
-                <div key={i} style={{ marginTop: '8px' }}>
-                  Tile {i + 1} color:{" "}
+                <div key={i} style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Tile {i + 1}:</span>
                   <input
                     type="color"
                     value={customPalette[i] || "#cccccc"}
@@ -475,7 +579,25 @@ export default function MosaicDesigner() {
                       newPalette[i] = e.target.value;
                       setCustomPalette(newPalette);
                     }}
+                    style={{ width: '40px', height: '30px' }}
                   />
+                  <button
+                    onClick={() => {
+                      setSelectedTileForColorCode(i);
+                      setShowColorCodeModal(true);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      backgroundColor: '#374151',
+                      color: 'white',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '11px'
+                    }}
+                  >
+                    NCS/RAL
+                  </button>
                 </div>
               ))}
             </div>
@@ -548,25 +670,65 @@ export default function MosaicDesigner() {
               </div>
             </div>
 
-            <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                onClick={newLayout}
-                style={{ padding: '8px 12px', backgroundColor: '#16a34a', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-              >
-                New Layout
-              </button>
-              <button
-                onClick={() => setShowPatternModal(true)}
-                style={{ padding: '8px 12px', backgroundColor: '#9333ea', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-              >
-                Design Pattern
-              </button>
-              <button
-                onClick={exportPNG}
-                style={{ padding: '8px 12px', backgroundColor: '#2563eb', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-              >
-                Export PNG
-              </button>
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={isEditMode}
+                    onChange={(e) => setIsEditMode(e.target.checked)}
+                  />{" "}
+                  Edit Mode (click tiles to color)
+                </label>
+              </div>
+              
+              {isEditMode && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}>Select color for painting:</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {customPalette.map((color, index) => (
+                      <div
+                        key={index}
+                        onClick={() => setSelectedMainColor(index)}
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          backgroundColor: color,
+                          border: selectedMainColor === index ? '3px solid #000' : '1px solid #ccc',
+                          cursor: 'pointer',
+                          borderRadius: '4px'
+                        }}
+                        title={`Tile ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    Symmetry ({symmetryType}) will be applied when coloring tiles
+                  </div>
+                </div>
+              )}
+              
+              
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={newLayout}
+                  style={{ padding: '8px 12px', backgroundColor: '#16a34a', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                >
+                  New Layout
+                </button>
+                <button
+                  onClick={() => setShowPatternModal(true)}
+                  style={{ padding: '8px 12px', backgroundColor: '#9333ea', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                >
+                  Design Pattern
+                </button>
+                <button
+                  onClick={exportPNG}
+                  style={{ padding: '8px 12px', backgroundColor: '#2563eb', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                >
+                  Export PNG
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -575,9 +737,132 @@ export default function MosaicDesigner() {
       {/* Podgląd po prawej - 80% */}
       <div ref={containerRef} style={{ width: '80%', backgroundColor: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
         <div style={{ display: 'inline-block' }}>
-          <canvas ref={previewRef} style={{ border: '1px solid #ccc', display: 'block' }} />
+          <canvas 
+            ref={previewRef} 
+            style={{ 
+              border: '1px solid #ccc', 
+              display: 'block',
+              cursor: isEditMode ? 'crosshair' : 'default'
+            }} 
+            onClick={handleMainTileClick}
+          />
         </div>
       </div>
+      
+      {/* Color Code Input Modal */}
+      {showColorCodeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '400px',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <h3 style={{ marginTop: 0 }}>Enter Color Code</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '8px' }}>Color System:</div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <label>
+                  <input
+                    type="radio"
+                    value="NCS"
+                    checked={colorCodeType === 'NCS'}
+                    onChange={(e) => setColorCodeType(e.target.value)}
+                  /> NCS
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    value="RAL"
+                    checked={colorCodeType === 'RAL'}
+                    onChange={(e) => setColorCodeType(e.target.value)}
+                  /> RAL
+                </label>
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label>
+                {colorCodeType} Color Code:
+                <input
+                  type="text"
+                  value={colorCodeInput}
+                  onChange={(e) => setColorCodeInput(e.target.value)}
+                  placeholder={colorCodeType === 'NCS' ? 'e.g., S 2010-B' : 'e.g., RAL 5015'}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginTop: '4px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px'
+                  }}
+                />
+              </label>
+            </div>
+            
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
+              {colorCodeType === 'NCS' ? (
+                <div>
+                  <strong>NCS Examples:</strong><br/>
+                  S 0300-N (Light Gray), S 2010-B (Blue), S 3010-G (Green), S 4020-Y10R (Brown)
+                </div>
+              ) : (
+                <div>
+                  <strong>RAL Examples:</strong><br/>
+                  RAL 5015 (Sky Blue), RAL 6018 (Yellow Green), RAL 3020 (Traffic Red), RAL 9010 (Pure White)
+                </div>
+              )}
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowColorCodeModal(false);
+                  setColorCodeInput('');
+                  setSelectedTileForColorCode(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleColorCodeSubmit}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#16a34a',
+                  color: 'white',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Pattern Designer Modal */}
       {showPatternModal && (
@@ -708,6 +993,24 @@ export default function MosaicDesigner() {
                       style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                       title={`Edit color for Tile ${index + 1}`}
                     />
+                    <button
+                      onClick={() => {
+                        setSelectedTileForColorCode(index);
+                        setShowColorCodeModal(true);
+                      }}
+                      style={{
+                        padding: '4px 6px',
+                        backgroundColor: '#374151',
+                        color: 'white',
+                        borderRadius: '4px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        marginLeft: '4px'
+                      }}
+                    >
+                      NCS/RAL
+                    </button>
                   </div>
                 ))}
               </div>

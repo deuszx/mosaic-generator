@@ -1,0 +1,63 @@
+// NCS (Natural Color System) Color Code Mappings
+// Common NCS colors with their hex equivalents
+
+export const ncsColors = {
+  'S 0300-N': '#E5E5E5',
+  'S 0500-N': '#CCCCCC',
+  'S 1000-N': '#B3B3B3',
+  'S 1500-N': '#999999',
+  'S 2000-N': '#808080',
+  'S 2500-N': '#666666',
+  'S 3000-N': '#4D4D4D',
+  'S 3500-N': '#333333',
+  'S 4000-N': '#1A1A1A',
+  'S 4500-N': '#0D0D0D',
+  'S 5000-N': '#000000',
+  'S 0502-R': '#E8E1E1',
+  'S 1002-R': '#D9CFCF',
+  'S 1502-R': '#C9BCBC',
+  'S 2002-R': '#B8A8A8',
+  'S 1005-R10B': '#D6CDCD',
+  'S 1502-R50B': '#C7C2CC',
+  'S 2005-R20B': '#B3A5A8',
+  'S 1510-B': '#C2CCD4',
+  'S 2010-B': '#A8B5C2',
+  'S 3010-B': '#8A9DAE',
+  'S 4010-B': '#6B849A',
+  'S 5010-B': '#4D6B85',
+  'S 1510-R90B': '#C2CDD4',
+  'S 2010-R90B': '#A8B6C2',
+  'S 3010-R90B': '#8A9EAE',
+  'S 4010-R90B': '#6B859A',
+  'S 5010-R90B': '#4D6C85',
+  'S 1015-B20G': '#BFD4CF',
+  'S 2010-G': '#A5C2B3',
+  'S 3010-G': '#85AE9A',
+  'S 4010-G': '#669A80',
+  'S 5010-G': '#4D8566',
+  'S 1510-G20Y': '#CDD4C2',
+  'S 2010-G20Y': '#B6C2A8',
+  'S 3010-G20Y': '#9EAE8A',
+  'S 4010-G20Y': '#859A6B',
+  'S 5010-G20Y': '#6C854D',
+  'S 2010-Y': '#C2B6A8',
+  'S 3010-Y': '#AE9E8A',
+  'S 4010-Y': '#9A856B',
+  'S 5010-Y': '#856C4D',
+  'S 2020-Y10R': '#C2AFA5',
+  'S 3020-Y10R': '#AE9685',
+  'S 4020-Y10R': '#9A7C66',
+  'S 5020-Y10R': '#85634D',
+  'S 3020-R10B': '#AE8A9E',
+  'S 4020-R10B': '#9A6B85',
+  'S 5020-R10B': '#854D6C',
+  'S 2030-Y90R': '#C2A5B6',
+  'S 3030-Y90R': '#AE859E',
+  'S 4030-Y90R': '#9A6685',
+  'S 5030-Y90R': '#854D6C'
+};
+
+export const ncsToHex = (ncsCode) => {
+  const normalizedCode = ncsCode.trim().toUpperCase();
+  return ncsColors[normalizedCode] || null;
+};
