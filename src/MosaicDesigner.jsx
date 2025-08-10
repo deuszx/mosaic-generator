@@ -68,7 +68,9 @@ export default function MosaicDesigner() {
     if (type === 'NCS') {
       return ncsToHex(code);
     } else if (type === 'RAL') {
-      return ralToHex(code);
+      // Add "RAL " prefix if not present
+      const ralCode = code.toUpperCase().startsWith('RAL ') ? code : `RAL ${code}`;
+      return ralToHex(ralCode);
     }
     return null;
   };
@@ -907,7 +909,7 @@ export default function MosaicDesigner() {
                   type="text"
                   value={colorCodeInput}
                   onChange={(e) => setColorCodeInput(e.target.value)}
-                  placeholder={colorCodeType === 'NCS' ? 'e.g., S 2010-B' : 'e.g., RAL 5015'}
+                  placeholder={colorCodeType === 'NCS' ? 'e.g., S 2010-B' : 'e.g., 5015'}
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -928,7 +930,7 @@ export default function MosaicDesigner() {
               ) : (
                 <div>
                   <strong>RAL Examples:</strong><br/>
-                  RAL 5015 (Sky Blue), RAL 6018 (Yellow Green), RAL 3020 (Traffic Red), RAL 9010 (Pure White)
+                  5015 (Sky Blue), 6018 (Yellow Green), 3020 (Traffic Red), 9010 (Pure White)
                 </div>
               )}
             </div>
