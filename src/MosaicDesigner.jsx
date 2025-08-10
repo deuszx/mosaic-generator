@@ -32,6 +32,8 @@ export default function MosaicDesigner() {
   const [selectedTileForColorCode, setSelectedTileForColorCode] = useState(null);
   const [colorCodeInput, setColorCodeInput] = useState('');
   const [colorCodeType, setColorCodeType] = useState('NCS');
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPatternDragging, setIsPatternDragging] = useState(false);
   
   // Performance optimization refs
   const animationFrameRef = useRef(null);
@@ -345,7 +347,7 @@ export default function MosaicDesigner() {
     setShowPatternModal(false);
   }
   
-  function handlePatternTileClick(row, col) {
+  function colorPatternTile(row, col) {
     const newGrid = patternGrid.map(r => [...r]);
     newGrid[row][col] = selectedPatternColor;
     
@@ -366,16 +368,28 @@ export default function MosaicDesigner() {
     
     setPatternGrid(newGrid);
   }
+
+  function handlePatternTileClick(row, col) {
+    colorPatternTile(row, col);
+  }
+
+  function handlePatternMouseDown(row, col) {
+    setIsPatternDragging(true);
+    colorPatternTile(row, col);
+  }
+
+  function handlePatternMouseEnter(row, col) {
+    if (isPatternDragging) {
+      colorPatternTile(row, col);
+    }
+  }
+
+  function handlePatternMouseUp() {
+    setIsPatternDragging(false);
+  }
   
-  function handleMainTileClick(event) {
+  function colorTileAtPosition(x, y) {
     if (!isEditMode || !mosaicDataRef.current) return;
-    
-    const canvas = previewRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scale = parseFloat(canvas.style.transform.match(/scale\(([^)]+)\)/)?.[1]) || 1;
-    
-    const x = (event.clientX - rect.left) / scale;
-    const y = (event.clientY - rect.top) / scale;
     
     const data = mosaicDataRef.current;
     const tilePx = data.tileSizeCm * CM_TO_PX;
@@ -419,8 +433,52 @@ export default function MosaicDesigner() {
         
         // Redraw
         drawMosaicFromData(mosaicDataRef.current);
+        return true; // Return true if a tile was colored
       }
     }
+    return false;
+  }
+
+  function handleMainTileClick(event) {
+    const canvas = previewRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scale = parseFloat(canvas.style.transform.match(/scale\(([^)]+)\)/)?.[1]) || 1;
+    
+    const x = (event.clientX - rect.left) / scale;
+    const y = (event.clientY - rect.top) / scale;
+    
+    colorTileAtPosition(x, y);
+  }
+
+  function handleMouseDown(event) {
+    if (!isEditMode || !mosaicDataRef.current) return;
+    
+    const canvas = previewRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scale = parseFloat(canvas.style.transform.match(/scale\(([^)]+)\)/)?.[1]) || 1;
+    
+    const x = (event.clientX - rect.left) / scale;
+    const y = (event.clientY - rect.top) / scale;
+    
+    setIsDragging(true);
+    colorTileAtPosition(x, y);
+  }
+
+  function handleMouseMove(event) {
+    if (!isDragging || !isEditMode || !mosaicDataRef.current) return;
+    
+    const canvas = previewRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scale = parseFloat(canvas.style.transform.match(/scale\(([^)]+)\)/)?.[1]) || 1;
+    
+    const x = (event.clientX - rect.left) / scale;
+    const y = (event.clientY - rect.top) / scale;
+    
+    colorTileAtPosition(x, y);
+  }
+
+  function handleMouseUp() {
+    setIsDragging(false);
   }
   
   function generateSymmetricPattern() {
@@ -745,6 +803,10 @@ export default function MosaicDesigner() {
               cursor: isEditMode ? 'crosshair' : 'default'
             }} 
             onClick={handleMainTileClick}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           />
         </div>
       </div>
@@ -1018,17 +1080,23 @@ export default function MosaicDesigner() {
             
             <div style={{ marginBottom: '16px' }}>
               <div>Click tiles to color them:</div>
-              <div style={{
-                display: 'inline-block',
-                border: '2px solid #333',
-                marginTop: '8px'
-              }}>
+              <div 
+                style={{
+                  display: 'inline-block',
+                  border: '2px solid #333',
+                  marginTop: '8px'
+                }}
+                onMouseLeave={handlePatternMouseUp}
+              >
                 {patternGrid.map((row, rowIndex) => (
                   <div key={rowIndex} style={{ display: 'flex' }}>
                     {row.map((colorIndex, colIndex) => (
                       <div
                         key={colIndex}
                         onClick={() => handlePatternTileClick(rowIndex, colIndex)}
+                        onMouseDown={() => handlePatternMouseDown(rowIndex, colIndex)}
+                        onMouseEnter={() => handlePatternMouseEnter(rowIndex, colIndex)}
+                        onMouseUp={handlePatternMouseUp}
                         style={{
                           width: '30px',
                           height: '30px',
