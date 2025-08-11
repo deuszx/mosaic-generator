@@ -304,6 +304,74 @@ export default function MosaicDesigner() {
   // 1 cm ≈ 37.8 px (96 DPI)
   const CM_TO_PX = 37.7952755906;
   
+  // LocalStorage key for saving settings
+  const STORAGE_KEY = 'mosaicDesignerSettings';
+  
+  // Save settings to localStorage
+  const saveSettings = useCallback(() => {
+    const settings = {
+      roomWidthCm,
+      roomHeightCm,
+      tileSizeCm,
+      tileCount,
+      customPalette,
+      showGrid,
+      symmetryType,
+      groutWidth,
+      groutColor,
+      colorCodeType,
+      expandedSections,
+      mosaicData: mosaicDataRef.current,
+      hasGenerated: hasGeneratedRef.current,
+      timestamp: Date.now() // For debugging/versioning
+    };
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.warn('Failed to save settings to localStorage:', error);
+    }
+  }, [roomWidthCm, roomHeightCm, tileSizeCm, tileCount, customPalette, showGrid, symmetryType, groutWidth, groutColor, colorCodeType, expandedSections]);
+  
+  // Load settings from localStorage
+  const loadSettings = useCallback(() => {
+    try {
+      const savedSettings = localStorage.getItem(STORAGE_KEY);
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        
+        // Apply saved settings with validation
+        if (settings.roomWidthCm && settings.roomWidthCm > 0) setRoomWidthCm(settings.roomWidthCm);
+        if (settings.roomHeightCm && settings.roomHeightCm > 0) setRoomHeightCm(settings.roomHeightCm);
+        if (settings.tileSizeCm && settings.tileSizeCm > 0) setTileSizeCm(settings.tileSizeCm);
+        if (settings.tileCount && settings.tileCount > 0) setTileCount(settings.tileCount);
+        if (settings.customPalette && Array.isArray(settings.customPalette)) setCustomPalette(settings.customPalette);
+        if (typeof settings.showGrid === 'boolean') setShowGrid(settings.showGrid);
+        if (settings.symmetryType) setSymmetryType(settings.symmetryType);
+        if (typeof settings.groutWidth === 'number' && settings.groutWidth >= 0) setGroutWidth(settings.groutWidth);
+        if (settings.groutColor) setGroutColor(settings.groutColor);
+        if (settings.colorCodeType) setColorCodeType(settings.colorCodeType);
+        if (settings.expandedSections && typeof settings.expandedSections === 'object') {
+          setExpandedSections(settings.expandedSections);
+        }
+        
+        // Restore mosaic data and generation state
+        if (settings.mosaicData && settings.mosaicData.pattern) {
+          mosaicDataRef.current = settings.mosaicData;
+        }
+        if (typeof settings.hasGenerated === 'boolean') {
+          hasGeneratedRef.current = settings.hasGenerated;
+        }
+        
+        console.log('Settings loaded successfully from localStorage');
+        return true;
+      }
+    } catch (error) {
+      console.warn('Failed to load settings from localStorage:', error);
+    }
+    return false;
+  }, []);
+  
   // Initialize pattern grid when dimensions change
   useEffect(() => {
     const newGrid = Array(patternHeight).fill(null).map(() => 
@@ -383,7 +451,7 @@ export default function MosaicDesigner() {
   // Create a memoized regeneration function that has access to current state
   const autoRegenerateMosaic = useCallback(() => {
     try {
-      if (mode === "custom" && customPalette.length === tileCount) {
+      if (mode === "custom") {
         if (hasGeneratedRef.current) {
           // Try to preserve the existing pattern with new dimensions
           const success = redrawExistingPattern();
@@ -406,7 +474,7 @@ export default function MosaicDesigner() {
     } finally {
       setIsRegenerating(false);
     }
-  }, [mode, customPalette, tileCount, roomWidthCm, roomHeightCm, tileSizeCm, symmetryType, groutWidth, groutColor]);
+  }, [mode, roomWidthCm, roomHeightCm, tileSizeCm, symmetryType, groutWidth, groutColor]);
 
   // Auto-regenerate canvas when dimensions change
   useEffect(() => {
@@ -432,12 +500,48 @@ export default function MosaicDesigner() {
     };
   }, [roomWidthCm, roomHeightCm, tileSizeCm, autoRegenerateMosaic]);
 
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+  
+  // Redraw canvas after settings are loaded
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (mosaicDataRef.current && hasGeneratedRef.current && previewRef.current) {
+        drawMosaicFromData(mosaicDataRef.current);
+      }
+    }, 100); // Small delay to ensure all settings are applied
+    
+    return () => clearTimeout(timer);
+  }, [loadSettings]);
+  
+  // Save settings when they change (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      saveSettings();
+    }, 1000); // Save after 1 second of inactivity
+    
+    return () => clearTimeout(timeoutId);
+  }, [saveSettings]);
+  
+  // Save pattern when painting ends (when isDragging becomes false)
+  useEffect(() => {
+    if (!isDragging && hasGeneratedRef.current) {
+      const timeoutId = setTimeout(() => {
+        saveSettings();
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isDragging, saveSettings]);
+
   // Draw empty canvas on initial load
   useEffect(() => {
-    if (mode === "custom" && !hasGeneratedRef.current && previewRef.current && customPalette.length === tileCount) {
+    if (mode === "custom" && !hasGeneratedRef.current && previewRef.current) {
       drawEmptyCanvas();
     }
-  }, [mode, customPalette.length, tileCount]);
+  }, [mode]);
 
 
   function generateMosaicData() {
@@ -1057,11 +1161,11 @@ export default function MosaicDesigner() {
     }
     
     animationFrameRef.current = requestAnimationFrame(() => {
-      if (mode === "custom" && customPalette.length === tileCount) {
+      if (mode === "custom") {
         drawCustomMosaic();
       }
     });
-  }, [mode, customPalette, tileCount, tileSizeCm, roomWidthCm, roomHeightCm, symmetryType]);
+  }, [mode, tileSizeCm, roomWidthCm, roomHeightCm, symmetryType]);
 
   function exportPNG() {
     const url = previewRef.current.toDataURL("image/png");
