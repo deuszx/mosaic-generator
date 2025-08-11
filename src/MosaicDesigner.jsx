@@ -293,6 +293,8 @@ export default function MosaicDesigner() {
   // Debounce timer ref for auto-regeneration
   const regenerateTimerRef = useRef(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  // Track custom pattern template for extending canvas
+  const patternTemplateRef = useRef(null);
   
   // Performance optimization refs
   const animationFrameRef = useRef(null);
@@ -385,8 +387,14 @@ export default function MosaicDesigner() {
     try {
       if (mode === "custom" && customPalette.length === tileCount) {
         if (hasGeneratedRef.current) {
-          // If we have a mosaic, regenerate it
-          drawCustomMosaic();
+          // Try to preserve the existing pattern with new dimensions
+          const success = redrawExistingPattern();
+          if (!success) {
+            // If pattern can't be preserved, draw empty canvas
+            drawEmptyCanvas();
+            // Reset the generation flag since we cleared the mosaic
+            hasGeneratedRef.current = false;
+          }
         } else {
           // If no mosaic yet, just draw empty canvas with correct dimensions
           drawEmptyCanvas();
@@ -394,6 +402,9 @@ export default function MosaicDesigner() {
       }
     } catch (error) {
       console.error("Error regenerating mosaic:", error);
+      // On error, fallback to empty canvas
+      drawEmptyCanvas();
+      hasGeneratedRef.current = false;
     } finally {
       setIsRegenerating(false);
     }
@@ -535,8 +546,8 @@ export default function MosaicDesigner() {
     
     // Draw to main canvas with grout
     const ctx = previewRef.current.getContext("2d", { alpha: false });
-    const canvasWidth = cols * tilePx + (cols + 1) * groutPx;
-    const canvasHeight = rows * tilePx + (rows + 1) * groutPx;
+    const canvasWidth = cols * tilePx + (cols - 1) * groutPx;
+    const canvasHeight = rows * tilePx + (rows - 1) * groutPx;
     
     if (previewRef.current.width !== canvasWidth || previewRef.current.height !== canvasHeight) {
       previewRef.current.width = canvasWidth;
@@ -553,17 +564,10 @@ export default function MosaicDesigner() {
         const colorIndex = pattern[y][x];
         ctx.fillStyle = palette[colorIndex];
         
-        const tileX = x * (tilePx + groutPx) + groutPx;
-        const tileY = y * (tilePx + groutPx) + groutPx;
+        const tileX = x * (tilePx + groutPx);
+        const tileY = y * (tilePx + groutPx);
         
         ctx.fillRect(tileX, tileY, tilePx, tilePx);
-        
-        // Add subtle border in edit mode for better tile visibility
-        if (isEditMode) {
-          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(tileX, tileY, tilePx, tilePx);
-        }
       }
     }
     
@@ -591,14 +595,15 @@ export default function MosaicDesigner() {
       }
     }
     
-    // Draw grid if enabled (adjusted for grout)
-    if (showGrid) {
+    // Draw grid if enabled - only when there's no grout (grout provides natural separation)
+    if (showGrid && groutPx === 0) {
       ctx.strokeStyle = "rgba(0,0,0,0.2)";
       ctx.lineWidth = 1;
       
+      // Draw lines between tiles only when there's no grout
       // Vertical lines
-      for (let x = 0; x <= cols; x++) {
-        const lineX = x * tilePx + (x + 1) * groutPx - groutPx / 2;
+      for (let x = 1; x < cols; x++) {
+        const lineX = x * tilePx;
         ctx.beginPath();
         ctx.moveTo(lineX, 0);
         ctx.lineTo(lineX, canvasHeight);
@@ -606,8 +611,8 @@ export default function MosaicDesigner() {
       }
       
       // Horizontal lines
-      for (let y = 0; y <= rows; y++) {
-        const lineY = y * tilePx + (y + 1) * groutPx - groutPx / 2;
+      for (let y = 1; y < rows; y++) {
+        const lineY = y * tilePx;
         ctx.beginPath();
         ctx.moveTo(0, lineY);
         ctx.lineTo(canvasWidth, lineY);
@@ -627,8 +632,8 @@ export default function MosaicDesigner() {
     const rows = Math.floor(heightPx / tilePx);
     
     const ctx = previewRef.current.getContext("2d", { alpha: false });
-    const canvasWidth = cols * tilePx + (cols + 1) * groutPx;
-    const canvasHeight = rows * tilePx + (rows + 1) * groutPx;
+    const canvasWidth = cols * tilePx + (cols - 1) * groutPx;
+    const canvasHeight = rows * tilePx + (rows - 1) * groutPx;
     
     // Set canvas dimensions
     if (previewRef.current.width !== canvasWidth || previewRef.current.height !== canvasHeight) {
@@ -644,11 +649,11 @@ export default function MosaicDesigner() {
     ctx.strokeStyle = '#e5e7eb';
     ctx.lineWidth = 1;
     
-    // Draw tile boundaries
+    // Draw tile boundaries with correct grout spacing
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        const tileX = x * (tilePx + groutPx) + groutPx;
-        const tileY = y * (tilePx + groutPx) + groutPx;
+        const tileX = x * (tilePx + groutPx);
+        const tileY = y * (tilePx + groutPx);
         ctx.strokeRect(tileX, tileY, tilePx, tilePx);
       }
     }
@@ -677,7 +682,108 @@ export default function MosaicDesigner() {
     }
   }
 
+  function redrawExistingPattern() {
+    if (!mosaicDataRef.current) return false;
+    
+    const currentData = mosaicDataRef.current;
+    const tilePx = tileSizeCm * CM_TO_PX;
+    const widthPx = roomWidthCm * CM_TO_PX;
+    const heightPx = roomHeightCm * CM_TO_PX;
+    const newCols = Math.floor(widthPx / tilePx);
+    const newRows = Math.floor(heightPx / tilePx);
+    
+    const oldCols = currentData.cols;
+    const oldRows = currentData.rows;
+    const oldPattern = currentData.pattern;
+    
+    // Check if the existing pattern can fit in the new dimensions
+    if (oldCols <= newCols && oldRows <= newRows) {
+      // Pattern fits - create new pattern with existing tiles preserved
+      const newPattern = [];
+      for (let y = 0; y < newRows; y++) {
+        newPattern[y] = [];
+        for (let x = 0; x < newCols; x++) {
+          if (y < oldRows && x < oldCols) {
+            // Keep existing tile
+            newPattern[y][x] = oldPattern[y][x];
+          } else {
+            // Fill new areas using the custom pattern if available
+            if (patternTemplateRef.current) {
+              const template = patternTemplateRef.current;
+              const patternX = x % template.width;
+              const patternY = y % template.height;
+              newPattern[y][x] = template.grid[patternY][patternX];
+            } else {
+              // Fallback to random colors if no pattern template
+              newPattern[y][x] = Math.floor(Math.random() * customPalette.length);
+            }
+          }
+        }
+      }
+      
+      // Update stored data with new dimensions but preserved pattern
+      mosaicDataRef.current = {
+        ...currentData,
+        pattern: newPattern,
+        cols: newCols,
+        rows: newRows,
+        tileSizeCm,
+        roomWidthCm,
+        roomHeightCm
+      };
+      
+      drawMosaicFromData(mosaicDataRef.current);
+      return true;
+    } else {
+      // Pattern doesn't fit - need to truncate or reset
+      if (newCols > 0 && newRows > 0) {
+        // Truncate existing pattern to fit new dimensions
+        const newPattern = [];
+        for (let y = 0; y < newRows; y++) {
+          newPattern[y] = [];
+          for (let x = 0; x < newCols; x++) {
+            if (y < oldRows && x < oldCols) {
+              // Keep existing tile if it fits
+              newPattern[y][x] = oldPattern[y][x];
+            } else {
+              // Fill new areas using the custom pattern if available
+              if (patternTemplateRef.current) {
+                const template = patternTemplateRef.current;
+                const patternX = x % template.width;
+                const patternY = y % template.height;
+                newPattern[y][x] = template.grid[patternY][patternX];
+              } else {
+                // Fallback to random colors if no pattern template
+                newPattern[y][x] = Math.floor(Math.random() * customPalette.length);
+              }
+            }
+          }
+        }
+        
+        // Update stored data
+        mosaicDataRef.current = {
+          ...currentData,
+          pattern: newPattern,
+          cols: newCols,
+          rows: newRows,
+          tileSizeCm,
+          roomWidthCm,
+          roomHeightCm
+        };
+        
+        drawMosaicFromData(mosaicDataRef.current);
+        return true;
+      } else {
+        // Invalid dimensions
+        return false;
+      }
+    }
+  }
+
   function drawCustomMosaic() {
+    // Clear pattern template since we're generating a new random mosaic
+    patternTemplateRef.current = null;
+    
     const data = generateMosaicData();
     drawMosaicFromData(data);
   }
@@ -685,6 +791,14 @@ export default function MosaicDesigner() {
   function applyPattern() {
     // Update the main palette with temp palette
     setCustomPalette([...tempPalette]);
+    
+    // Store the pattern template for later use when resizing
+    patternTemplateRef.current = {
+      grid: patternGrid.map(row => [...row]),
+      width: patternWidth,
+      height: patternHeight,
+      palette: [...tempPalette]
+    };
     
     const tilePx = tileSizeCm * CM_TO_PX;
     const widthPx = roomWidthCm * CM_TO_PX;
@@ -788,15 +902,15 @@ export default function MosaicDesigner() {
     const tilePx = data.tileSizeCm * CM_TO_PX;
     const groutPx = groutWidth * CM_TO_PX;
     
-    // Calculate which tile was clicked
-    const tileCol = Math.floor((x - groutPx) / (tilePx + groutPx));
-    const tileRow = Math.floor((y - groutPx) / (tilePx + groutPx));
+    // Calculate which tile was clicked with corrected positioning
+    const tileCol = Math.floor(x / (tilePx + groutPx));
+    const tileRow = Math.floor(y / (tilePx + groutPx));
     
     // Check if click is within valid tile bounds
     if (tileCol >= 0 && tileCol < data.cols && tileRow >= 0 && tileRow < data.rows) {
       // Check if click is actually on a tile (not on grout)
-      const tileX = tileCol * (tilePx + groutPx) + groutPx;
-      const tileY = tileRow * (tilePx + groutPx) + groutPx;
+      const tileX = tileCol * (tilePx + groutPx);
+      const tileY = tileRow * (tilePx + groutPx);
       
       if (x >= tileX && x <= tileX + tilePx && y >= tileY && y <= tileY + tilePx) {
         // Update the pattern with symmetry
