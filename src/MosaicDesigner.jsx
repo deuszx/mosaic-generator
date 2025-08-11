@@ -278,9 +278,7 @@ export default function MosaicDesigner() {
   const [expandedSections, setExpandedSections] = useState({
     canvas: true,
     palette: true,
-    design: true,
-    edit: false,
-    actions: true,
+    mosaic: true,
   });
   
   const toggleSection = (section) => {
@@ -1251,64 +1249,66 @@ export default function MosaicDesigner() {
                         </div>
                       ))}
                     </div>
+                    
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                      <div style={styles.inputGroup}>
+                        <label style={styles.label}>Grout Width (cm)</label>
+                        <input
+                          type="number"
+                          value={groutWidth}
+                          onChange={(e) => setGroutWidth(Math.max(0, Number(e.target.value)))}
+                          min={0}
+                          max={2}
+                          step={0.05}
+                          style={styles.input}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = styles.inputFocus.borderColor;
+                            e.target.style.boxShadow = styles.inputFocus.boxShadow;
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = '#d1d5db';
+                            e.target.style.boxShadow = 'none';
+                          }}
+                        />
+                      </div>
+                      
+                      <div style={styles.inputGroup}>
+                        <label style={styles.label}>Grout Color</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input
+                            type="color"
+                            value={groutColor}
+                            onChange={(e) => setGroutColor(e.target.value)}
+                            style={{
+                              width: '60px',
+                              height: '36px',
+                              borderRadius: '6px',
+                              border: '1px solid #d1d5db',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <span style={{ fontSize: '12px', color: '#6b7280' }}>{groutColor}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Design Options Section */}
+              {/* Mosaic Settings Section */}
               <div style={styles.section}>
                 <div 
                   style={styles.sectionHeader}
-                  onClick={() => toggleSection('design')}
+                  onClick={() => toggleSection('mosaic')}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
                 >
-                  <span>⚙️ Design Options</span>
-                  <span>{expandedSections.design ? '▼' : '▶'}</span>
+                  <span>🎲 Mosaic Settings</span>
+                  <span>{expandedSections.mosaic ? '▼' : '▶'}</span>
                 </div>
-                {expandedSections.design && (
+                {expandedSections.mosaic && (
                   <div style={styles.sectionContent}>
-                    <div style={styles.inputGroup}>
-                      <label style={styles.label}>Grout Width (cm)</label>
-                      <input
-                        type="number"
-                        value={groutWidth}
-                        onChange={(e) => setGroutWidth(Math.max(0, Number(e.target.value)))}
-                        min={0}
-                        max={2}
-                        step={0.05}
-                        style={styles.input}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = styles.inputFocus.borderColor;
-                          e.target.style.boxShadow = styles.inputFocus.boxShadow;
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      />
-                    </div>
-                    
-                    <div style={styles.inputGroup}>
-                      <label style={styles.label}>Grout Color</label>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <input
-                          type="color"
-                          value={groutColor}
-                          onChange={(e) => setGroutColor(e.target.value)}
-                          style={{
-                            width: '60px',
-                            height: '36px',
-                            borderRadius: '6px',
-                            border: '1px solid #d1d5db',
-                            cursor: 'pointer'
-                          }}
-                        />
-                        <span style={{ fontSize: '12px', color: '#6b7280' }}>{groutColor}</span>
-                      </div>
-                    </div>
-                    
-                    <div style={{ ...styles.inputGroup, marginTop: '16px' }}>
+                    <div style={{ ...styles.inputGroup, marginBottom: '16px' }}>
                       <label style={{ ...styles.label, marginBottom: '8px' }}>Symmetry Type</label>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {[
@@ -1343,7 +1343,7 @@ export default function MosaicDesigner() {
                       </div>
                     </div>
                     
-                    <div style={{ marginTop: '12px' }}>
+                    <div style={{ marginBottom: '16px' }}>
                       <label style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1359,143 +1359,7 @@ export default function MosaicDesigner() {
                         Show Grid Lines
                       </label>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Edit Tools Section */}
-              <div style={styles.section}>
-                <div 
-                  style={styles.sectionHeader}
-                  onClick={() => toggleSection('edit')}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                >
-                  <span>🖌️ Edit Tools</span>
-                  <span>{expandedSections.edit ? '▼' : '▶'}</span>
-                </div>
-                {expandedSections.edit && (
-                  <div style={styles.sectionContent}>
-                    <label style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '10px',
-                      backgroundColor: isEditMode ? '#eff6ff' : '#f9fafb',
-                      border: `2px solid ${isEditMode ? '#3b82f6' : '#e5e7eb'}`,
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      marginBottom: '12px'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={isEditMode}
-                        onChange={(e) => setIsEditMode(e.target.checked)}
-                        style={{ marginRight: '8px' }}
-                      />
-                      <div>
-                        <div style={{ fontSize: '14px', fontWeight: '500' }}>
-                          Edit Mode {isEditMode && '✓'}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                          Click and drag to paint tiles
-                        </div>
-                      </div>
-                    </label>
                     
-                    {isEditMode && (
-                      <>
-                        <div style={{ marginBottom: '12px' }}>
-                          <label style={styles.label}>Select Paint Color</label>
-                          <div style={{ 
-                            display: 'flex', 
-                            gap: '8px', 
-                            flexWrap: 'wrap',
-                            padding: '12px',
-                            backgroundColor: 'white',
-                            borderRadius: '6px',
-                            border: '1px solid #e5e7eb'
-                          }}>
-                            {customPalette.map((color, index) => (
-                              <div
-                                key={index}
-                                onClick={() => setSelectedMainColor(index)}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'scale(1.1)';
-                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = 'scale(1)';
-                                  e.currentTarget.style.boxShadow = selectedMainColor === index ? '0 0 0 2px white, 0 0 0 4px #3b82f6' : 'none';
-                                }}
-                                style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  backgroundColor: color,
-                                  border: selectedMainColor === index ? '3px solid #3b82f6' : '2px solid #e5e7eb',
-                                  borderRadius: '6px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  boxShadow: selectedMainColor === index ? '0 0 0 2px white, 0 0 0 4px #3b82f6' : 'none'
-                                }}
-                                title={`Color ${index + 1}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div style={{
-                          padding: '8px 12px',
-                          backgroundColor: '#fef3c7',
-                          border: '1px solid #fbbf24',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          color: '#92400e',
-                          marginBottom: '12px'
-                        }}>
-                          💡 Symmetry mode: <strong>{symmetryType}</strong>
-                        </div>
-                        
-                        {previousMosaicPattern && (
-                          <button
-                            onClick={undoLastMosaicPaint}
-                            style={{
-                              ...styles.button,
-                              ...styles.buttonDanger,
-                              width: '100%',
-                              justifyContent: 'center'
-                            }}
-                            onMouseEnter={(e) => {
-                              Object.assign(e.currentTarget.style, styles.buttonDangerHover);
-                            }}
-                            onMouseLeave={(e) => {
-                              Object.assign(e.currentTarget.style, styles.buttonDanger);
-                              e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = 'none';
-                            }}
-                          >
-                            ↩️ Undo Last Paint
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Actions Section */}
-              <div style={styles.section}>
-                <div 
-                  style={styles.sectionHeader}
-                  onClick={() => toggleSection('actions')}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                >
-                  <span>💾 Actions</span>
-                  <span>{expandedSections.actions ? '▼' : '▶'}</span>
-                </div>
-                {expandedSections.actions && (
-                  <div style={styles.sectionContent}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <button
                         onClick={newLayout}
@@ -1534,28 +1398,147 @@ export default function MosaicDesigner() {
                       >
                         🎨 Design Custom Pattern
                       </button>
-                      
-                      <button
-                        onClick={exportPNG}
-                        style={{
-                          ...styles.button,
-                          ...styles.buttonPrimary,
-                          justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          Object.assign(e.currentTarget.style, styles.buttonPrimaryHover);
-                        }}
-                        onMouseLeave={(e) => {
-                          Object.assign(e.currentTarget.style, styles.buttonPrimary);
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        📥 Export as PNG
-                      </button>
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Edit Mode Toggle */}
+              <div style={{
+                ...styles.section,
+                marginBottom: '8px'
+              }}>
+                <div style={styles.sectionContent}>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '12px',
+                    backgroundColor: isEditMode ? '#eff6ff' : '#f9fafb',
+                    border: `2px solid ${isEditMode ? '#3b82f6' : '#e5e7eb'}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={isEditMode}
+                      onChange={(e) => setIsEditMode(e.target.checked)}
+                      style={{ marginRight: '10px' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '15px', fontWeight: '600', color: '#111827' }}>
+                        🖌️ Edit Mode {isEditMode && '✓'}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>
+                        Click and drag to paint tiles
+                      </div>
+                    </div>
+                  </label>
+                  
+                  {isEditMode && (
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ ...styles.label, fontSize: '13px' }}>Paint Color</label>
+                        <div style={{ 
+                          display: 'flex', 
+                          gap: '6px', 
+                          flexWrap: 'wrap',
+                          padding: '8px',
+                          backgroundColor: 'white',
+                          borderRadius: '6px',
+                          border: '1px solid #e5e7eb'
+                        }}>
+                          {customPalette.map((color, index) => (
+                            <div
+                              key={index}
+                              onClick={() => setSelectedMainColor(index)}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.1)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.boxShadow = selectedMainColor === index ? '0 0 0 2px white, 0 0 0 4px #3b82f6' : 'none';
+                              }}
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                backgroundColor: color,
+                                border: selectedMainColor === index ? '3px solid #3b82f6' : '2px solid #e5e7eb',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: selectedMainColor === index ? '0 0 0 2px white, 0 0 0 4px #3b82f6' : 'none'
+                              }}
+                              title={`Color ${index + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div style={{
+                        padding: '6px 10px',
+                        backgroundColor: '#fef3c7',
+                        border: '1px solid #fbbf24',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        color: '#92400e',
+                        marginBottom: '8px'
+                      }}>
+                        💡 Symmetry: <strong>{symmetryType}</strong>
+                      </div>
+                      
+                      {previousMosaicPattern && (
+                        <button
+                          onClick={undoLastMosaicPaint}
+                          style={{
+                            ...styles.button,
+                            ...styles.buttonDanger,
+                            width: '100%',
+                            justifyContent: 'center',
+                            fontSize: '13px',
+                            padding: '6px 12px'
+                          }}
+                          onMouseEnter={(e) => {
+                            Object.assign(e.currentTarget.style, styles.buttonDangerHover);
+                          }}
+                          onMouseLeave={(e) => {
+                            Object.assign(e.currentTarget.style, styles.buttonDanger);
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          ↩️ Undo Last Paint
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Export Section */}
+              <div style={styles.section}>
+                <div style={styles.sectionContent}>
+                  <button
+                    onClick={exportPNG}
+                    style={{
+                      ...styles.button,
+                      ...styles.buttonPrimary,
+                      justifyContent: 'center',
+                      width: '100%'
+                    }}
+                    onMouseEnter={(e) => {
+                      Object.assign(e.currentTarget.style, styles.buttonPrimaryHover);
+                    }}
+                    onMouseLeave={(e) => {
+                      Object.assign(e.currentTarget.style, styles.buttonPrimary);
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    📥 Export as PNG
+                  </button>
+                </div>
               </div>
             </>
           )}
