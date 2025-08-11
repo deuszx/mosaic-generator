@@ -1179,7 +1179,7 @@ export default function MosaicDesigner() {
         drawCustomMosaic();
       }
     });
-  }, [mode, tileSizeCm, roomWidthCm, roomHeightCm, symmetryType]);
+  }, [mode, tileSizeCm, roomWidthCm, roomHeightCm, symmetryType, customPalette]);
 
   function exportPNG() {
     const url = previewRef.current.toDataURL("image/png");
