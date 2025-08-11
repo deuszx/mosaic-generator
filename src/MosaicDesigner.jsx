@@ -413,6 +413,8 @@ export default function MosaicDesigner() {
         const newPalette = [...customPalette];
         newPalette[selectedTileForColorCode] = hexColor;
         setCustomPalette(newPalette);
+        // Update existing tiles with the new color
+        updateMosaicWithNewColor(selectedTileForColorCode, hexColor);
       }
       setShowColorCodeModal(false);
       setColorCodeInput('');
@@ -639,6 +641,18 @@ export default function MosaicDesigner() {
     const scaleY = maxHeight / canvasHeight;
     
     return Math.min(scaleX, scaleY, 1); // Never scale up, only down
+  }
+  
+  function updateMosaicWithNewColor(colorIndex, newHexColor) {
+    // Update the palette in the stored mosaic data
+    if (mosaicDataRef.current && mosaicDataRef.current.palette) {
+      mosaicDataRef.current.palette[colorIndex] = newHexColor;
+      
+      // Redraw the canvas with the updated color
+      if (hasGeneratedRef.current && previewRef.current) {
+        drawMosaicFromData(mosaicDataRef.current);
+      }
+    }
   }
   
   function drawMosaicFromData(data) {
@@ -1318,6 +1332,8 @@ export default function MosaicDesigner() {
                               const newPalette = [...customPalette];
                               newPalette[i] = e.target.value;
                               setCustomPalette(newPalette);
+                              // Update existing tiles with the new color
+                              updateMosaicWithNewColor(i, e.target.value);
                             }}
                             style={{
                               width: '40px',
