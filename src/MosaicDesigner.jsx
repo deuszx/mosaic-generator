@@ -323,6 +323,7 @@ export default function MosaicDesigner() {
       expandedSections,
       mosaicData: mosaicDataRef.current,
       hasGenerated: hasGeneratedRef.current,
+      patternTemplate: patternTemplateRef.current,
       timestamp: Date.now() // For debugging/versioning
     };
     
@@ -361,6 +362,11 @@ export default function MosaicDesigner() {
         }
         if (typeof settings.hasGenerated === 'boolean') {
           hasGeneratedRef.current = settings.hasGenerated;
+        }
+        
+        // Restore pattern template
+        if (settings.patternTemplate) {
+          patternTemplateRef.current = settings.patternTemplate;
         }
         
         console.log('Settings loaded successfully from localStorage');
