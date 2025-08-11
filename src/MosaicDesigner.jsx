@@ -273,6 +273,7 @@ export default function MosaicDesigner() {
   const [isPatternDragging, setIsPatternDragging] = useState(false);
   const [previousMosaicPattern, setPreviousMosaicPattern] = useState(null);
   const [previousPatternGrid, setPreviousPatternGrid] = useState(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState({
@@ -324,6 +325,12 @@ export default function MosaicDesigner() {
       mosaicData: mosaicDataRef.current,
       hasGenerated: hasGeneratedRef.current,
       patternTemplate: patternTemplateRef.current,
+      // Save custom pattern data
+      patternGrid,
+      patternWidth,
+      patternHeight,
+      selectedPatternColor,
+      patternSymmetryType,
       timestamp: Date.now() // For debugging/versioning
     };
     
@@ -332,10 +339,11 @@ export default function MosaicDesigner() {
     } catch (error) {
       console.warn('Failed to save settings to localStorage:', error);
     }
-  }, [roomWidthCm, roomHeightCm, tileSizeCm, tileCount, customPalette, showGrid, symmetryType, groutWidth, groutColor, colorCodeType, expandedSections]);
+  }, [roomWidthCm, roomHeightCm, tileSizeCm, tileCount, customPalette, showGrid, symmetryType, groutWidth, groutColor, colorCodeType, expandedSections, patternGrid, patternWidth, patternHeight, selectedPatternColor, patternSymmetryType]);
   
   // Load settings from localStorage
   const loadSettings = useCallback(() => {
+    setIsLoadingSettings(true);
     try {
       const savedSettings = localStorage.getItem(STORAGE_KEY);
       if (savedSettings) {
@@ -369,29 +377,60 @@ export default function MosaicDesigner() {
           patternTemplateRef.current = settings.patternTemplate;
         }
         
+        // Restore custom pattern dimensions first
+        if (settings.patternWidth && settings.patternWidth > 0) {
+          setPatternWidth(settings.patternWidth);
+        }
+        if (settings.patternHeight && settings.patternHeight > 0) {
+          setPatternHeight(settings.patternHeight);
+        }
+        
+        // Then restore the pattern grid after a small delay to ensure dimensions are set
+        if (settings.patternGrid && Array.isArray(settings.patternGrid)) {
+          setTimeout(() => {
+            setPatternGrid(settings.patternGrid);
+          }, 50);
+        }
+        if (typeof settings.selectedPatternColor === 'number') {
+          setSelectedPatternColor(settings.selectedPatternColor);
+        }
+        if (settings.patternSymmetryType) {
+          setPatternSymmetryType(settings.patternSymmetryType);
+        }
+        
         console.log('Settings loaded successfully from localStorage');
+        setIsLoadingSettings(false);
         return true;
       }
     } catch (error) {
       console.warn('Failed to load settings from localStorage:', error);
     }
+    setIsLoadingSettings(false);
     return false;
   }, []);
   
-  // Initialize pattern grid when dimensions change
+  // Initialize pattern grid when dimensions change (but don't override when loading from localStorage)
   useEffect(() => {
-    const newGrid = Array(patternHeight).fill(null).map(() => 
-      Array(patternWidth).fill(0)
-    );
-    setPatternGrid(newGrid);
-  }, [patternWidth, patternHeight]);
+    if (!isLoadingSettings) {
+const newGrid = Array(patternHeight).fill(null).map(() => 
+        Array(patternWidth).fill(0)
+      );
+      setPatternGrid(newGrid);
+    }
+  }, [patternWidth, patternHeight, isLoadingSettings]);
   
   // Initialize temp palette when modal opens
   useEffect(() => {
     if (showPatternModal) {
-      setTempPalette([...customPalette]);
+      // If we have a saved pattern template with its own palette, use that
+      // Otherwise, use the current custom palette
+      if (patternTemplateRef.current && patternTemplateRef.current.palette) {
+setTempPalette([...patternTemplateRef.current.palette]);
+      } else {
+        setTempPalette([...customPalette]);
+      }
     }
-  }, [showPatternModal, customPalette]);
+  }, [showPatternModal, customPalette, patternGrid]);
   
   // Color code conversion functions - now using imported functions
   
@@ -2027,20 +2066,20 @@ export default function MosaicDesigner() {
                 {patternGrid.map((row, rowIndex) => (
                   <div key={rowIndex} style={{ display: 'flex' }}>
                     {row.map((colorIndex, colIndex) => (
-                      <div
-                        key={colIndex}
-                        onClick={() => handlePatternTileClick(rowIndex, colIndex)}
-                        onMouseDown={() => handlePatternMouseDown(rowIndex, colIndex)}
-                        onMouseEnter={() => handlePatternMouseEnter(rowIndex, colIndex)}
-                        onMouseUp={handlePatternMouseUp}
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          backgroundColor: tempPalette[colorIndex] || '#cccccc',
-                          border: '1px solid #666',
-                          cursor: 'pointer'
-                        }}
-                      />
+                        <div
+                          key={colIndex}
+                          onClick={() => handlePatternTileClick(rowIndex, colIndex)}
+                          onMouseDown={() => handlePatternMouseDown(rowIndex, colIndex)}
+                          onMouseEnter={() => handlePatternMouseEnter(rowIndex, colIndex)}
+                          onMouseUp={handlePatternMouseUp}
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            backgroundColor: tempPalette[colorIndex] || '#cccccc',
+                            border: '1px solid #666',
+                            cursor: 'pointer'
+                          }}
+                        />
                     ))}
                   </div>
                 ))}
