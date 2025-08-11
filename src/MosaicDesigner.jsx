@@ -2,6 +2,243 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { ncsToHex } from './colorCodes/ncsColors';
 import { ralToHex } from './colorCodes/ralColors';
 
+// Modern styled components
+const styles = {
+  // Design system colors
+  colors: {
+    primary: '#3b82f6',
+    primaryDark: '#2563eb',
+    secondary: '#8b5cf6',
+    secondaryDark: '#7c3aed',
+    success: '#10b981',
+    successDark: '#059669',
+    danger: '#ef4444',
+    dangerDark: '#dc2626',
+    neutral: '#6b7280',
+    neutralLight: '#f3f4f6',
+    neutralDark: '#374151',
+    white: '#ffffff',
+    border: '#e5e7eb',
+    shadow: 'rgba(0, 0, 0, 0.1)',
+  },
+  
+  // Spacing system
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '32px',
+  },
+  
+  // Component styles
+  container: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    height: '100vh',
+    padding: '16px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    gap: '16px',
+  },
+  
+  sidebar: {
+    width: '320px',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  
+  sidebarHeader: {
+    padding: '24px',
+    borderBottom: '1px solid #e5e7eb',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    borderRadius: '12px 12px 0 0',
+  },
+  
+  sidebarTitle: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    color: 'white',
+    margin: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  
+  sidebarContent: {
+    padding: '16px',
+    flex: 1,
+  },
+  
+  section: {
+    marginBottom: '16px',
+    backgroundColor: '#f9fafb',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    border: '1px solid #e5e7eb',
+    transition: 'all 0.3s ease',
+  },
+  
+  sectionHeader: {
+    padding: '12px 16px',
+    backgroundColor: 'white',
+    borderBottom: '1px solid #e5e7eb',
+    cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontWeight: '600',
+    fontSize: '14px',
+    color: '#374151',
+    transition: 'background-color 0.2s ease',
+    userSelect: 'none',
+  },
+  
+  sectionHeaderHover: {
+    backgroundColor: '#f3f4f6',
+  },
+  
+  sectionContent: {
+    padding: '16px',
+  },
+  
+  canvas: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  
+  canvasHeader: {
+    padding: '16px 24px',
+    borderBottom: '1px solid #e5e7eb',
+    backgroundColor: '#f9fafb',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  
+  canvasContent: {
+    flex: 1,
+    padding: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fafafa',
+    overflow: 'auto',
+  },
+  
+  inputGroup: {
+    marginBottom: '12px',
+  },
+  
+  label: {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: '4px',
+  },
+  
+  input: {
+    width: '100%',
+    padding: '8px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    transition: 'border-color 0.2s ease',
+    outline: 'none',
+  },
+  
+  inputFocus: {
+    borderColor: '#3b82f6',
+    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+  },
+  
+  button: {
+    padding: '8px 16px',
+    borderRadius: '6px',
+    border: 'none',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  
+  buttonPrimary: {
+    backgroundColor: '#3b82f6',
+    color: 'white',
+  },
+  
+  buttonPrimaryHover: {
+    backgroundColor: '#2563eb',
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+  },
+  
+  buttonSecondary: {
+    backgroundColor: '#8b5cf6',
+    color: 'white',
+  },
+  
+  buttonSecondaryHover: {
+    backgroundColor: '#7c3aed',
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+  },
+  
+  buttonSuccess: {
+    backgroundColor: '#10b981',
+    color: 'white',
+  },
+  
+  buttonSuccessHover: {
+    backgroundColor: '#059669',
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+  },
+  
+  buttonDanger: {
+    backgroundColor: '#ef4444',
+    color: 'white',
+  },
+  
+  buttonDangerHover: {
+    backgroundColor: '#dc2626',
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+  },
+  
+  colorPicker: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '6px',
+    border: '2px solid #e5e7eb',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  
+  colorPickerHover: {
+    transform: 'scale(1.1)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  },
+  
+  colorPickerSelected: {
+    border: '3px solid #3b82f6',
+    boxShadow: '0 0 0 2px white, 0 0 0 4px #3b82f6',
+  },
+};
+
 export default function MosaicDesigner() {
   const previewRef = useRef(null);
   const containerRef = useRef(null);
@@ -36,6 +273,26 @@ export default function MosaicDesigner() {
   const [isPatternDragging, setIsPatternDragging] = useState(false);
   const [previousMosaicPattern, setPreviousMosaicPattern] = useState(null);
   const [previousPatternGrid, setPreviousPatternGrid] = useState(null);
+  
+  // Collapsible sections state
+  const [expandedSections, setExpandedSections] = useState({
+    canvas: true,
+    palette: true,
+    design: true,
+    edit: false,
+    actions: true,
+  });
+  
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+  
+  // Debounce timer ref for auto-regeneration
+  const regenerateTimerRef = useRef(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   
   // Performance optimization refs
   const animationFrameRef = useRef(null);
@@ -122,6 +379,56 @@ export default function MosaicDesigner() {
       }
     };
   }, [showGrid, groutWidth, groutColor, redrawExistingMosaic]);
+  
+  // Create a memoized regeneration function that has access to current state
+  const autoRegenerateMosaic = useCallback(() => {
+    try {
+      if (mode === "custom" && customPalette.length === tileCount) {
+        if (hasGeneratedRef.current) {
+          // If we have a mosaic, regenerate it
+          drawCustomMosaic();
+        } else {
+          // If no mosaic yet, just draw empty canvas with correct dimensions
+          drawEmptyCanvas();
+        }
+      }
+    } catch (error) {
+      console.error("Error regenerating mosaic:", error);
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [mode, customPalette, tileCount, roomWidthCm, roomHeightCm, tileSizeCm, symmetryType, groutWidth, groutColor]);
+
+  // Auto-regenerate canvas when dimensions change
+  useEffect(() => {
+    // Clear any existing timer
+    if (regenerateTimerRef.current) {
+      clearTimeout(regenerateTimerRef.current);
+    }
+    
+    // Show regenerating indicator
+    setIsRegenerating(true);
+    
+    // Set a new timer with debounce
+    regenerateTimerRef.current = setTimeout(() => {
+      autoRegenerateMosaic();
+    }, 500); // 500ms debounce delay
+    
+    // Cleanup function
+    return () => {
+      if (regenerateTimerRef.current) {
+        clearTimeout(regenerateTimerRef.current);
+      }
+      setIsRegenerating(false);
+    };
+  }, [roomWidthCm, roomHeightCm, tileSizeCm, autoRegenerateMosaic]);
+
+  // Draw empty canvas on initial load
+  useEffect(() => {
+    if (mode === "custom" && !hasGeneratedRef.current && previewRef.current && customPalette.length === tileCount) {
+      drawEmptyCanvas();
+    }
+  }, [mode, customPalette.length, tileCount]);
 
 
   function generateMosaicData() {
@@ -309,6 +616,67 @@ export default function MosaicDesigner() {
     }
   }
   
+  function drawEmptyCanvas() {
+    if (!previewRef.current) return;
+    
+    const tilePx = tileSizeCm * CM_TO_PX;
+    const groutPx = groutWidth * CM_TO_PX;
+    const widthPx = roomWidthCm * CM_TO_PX;
+    const heightPx = roomHeightCm * CM_TO_PX;
+    const cols = Math.floor(widthPx / tilePx);
+    const rows = Math.floor(heightPx / tilePx);
+    
+    const ctx = previewRef.current.getContext("2d", { alpha: false });
+    const canvasWidth = cols * tilePx + (cols + 1) * groutPx;
+    const canvasHeight = rows * tilePx + (rows + 1) * groutPx;
+    
+    // Set canvas dimensions
+    if (previewRef.current.width !== canvasWidth || previewRef.current.height !== canvasHeight) {
+      previewRef.current.width = canvasWidth;
+      previewRef.current.height = canvasHeight;
+    }
+    
+    // Fill with a light background to show canvas dimensions
+    ctx.fillStyle = '#f9fafb';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    // Draw tile grid outline to show what the mosaic will look like
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    
+    // Draw tile boundaries
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const tileX = x * (tilePx + groutPx) + groutPx;
+        const tileY = y * (tilePx + groutPx) + groutPx;
+        ctx.strokeRect(tileX, tileY, tilePx, tilePx);
+      }
+    }
+    
+    // Apply scaling to fit viewport
+    const scale = calculateScaleFactor(canvasWidth, canvasHeight);
+    if (scale < 1) {
+      previewRef.current.style.transform = `scale(${scale})`;
+      previewRef.current.style.transformOrigin = 'top left';
+      const scaledWidth = canvasWidth * scale;
+      const scaledHeight = canvasHeight * scale;
+      previewRef.current.style.width = canvasWidth + 'px';
+      previewRef.current.style.height = canvasHeight + 'px';
+      if (previewRef.current.parentElement) {
+        previewRef.current.parentElement.style.width = scaledWidth + 'px';
+        previewRef.current.parentElement.style.height = scaledHeight + 'px';
+      }
+    } else {
+      previewRef.current.style.transform = '';
+      previewRef.current.style.width = '';
+      previewRef.current.style.height = '';
+      if (previewRef.current.parentElement) {
+        previewRef.current.parentElement.style.width = '';
+        previewRef.current.parentElement.style.height = '';
+      }
+    }
+  }
+
   function drawCustomMosaic() {
     const data = generateMosaicData();
     drawMosaicFromData(data);
@@ -592,267 +960,549 @@ export default function MosaicDesigner() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', width: '100%', height: '100vh', padding: '16px', backgroundColor: '#f3f4f6' }}>
-      {/* Panel menu po lewej - 20% */}
-      <div style={{ width: '20%', backgroundColor: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflowY: 'auto', marginRight: '16px' }}>
-        <div>
-          <label>
-            <input
-              type="radio"
-              value="custom"
-              checked={mode === "custom"}
-              onChange={() => setMode("custom")}
-            />{" "}
-            Custom Mosaic
-          </label>
+    <div style={styles.container}>
+      {/* Modern Sidebar */}
+      <div style={styles.sidebar}>
+        <div style={styles.sidebarHeader}>
+          <h1 style={styles.sidebarTitle}>
+            🎨 Mosaic Designer
+          </h1>
         </div>
-
-        {mode === "custom" && (
-          <>
-            <div style={{ marginTop: '12px' }}>
-              Room width (cm):{" "}
-              <input
-                type="number"
-                value={roomWidthCm}
-                onChange={(e) => setRoomWidthCm(Number(e.target.value))}
-                min={1}
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              Room height (cm):{" "}
-              <input
-                type="number"
-                value={roomHeightCm}
-                onChange={(e) => setRoomHeightCm(Number(e.target.value))}
-                min={1}
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              Tile size (cm):{" "}
-              <input
-                type="number"
-                value={tileSizeCm}
-                onChange={(e) => setTileSizeCm(Number(e.target.value))}
-                min={1}
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              Number of tile types:{" "}
-              <input
-                type="number"
-                value={tileCount}
-                min={1}
-                onChange={(e) => {
-                  const count = Number(e.target.value);
-                  setTileCount(count);
-                  setCustomPalette(Array(count).fill("#cccccc"));
-                }}
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              {Array.from({ length: tileCount }, (_, i) => (
-                <div key={i} style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>Tile {i + 1}:</span>
-                  <input
-                    type="color"
-                    value={customPalette[i] || "#cccccc"}
-                    onChange={(e) => {
-                      const newPalette = [...customPalette];
-                      newPalette[i] = e.target.value;
-                      setCustomPalette(newPalette);
-                    }}
-                    style={{ width: '40px', height: '30px' }}
-                  />
-                  <button
-                    onClick={() => {
-                      setSelectedTileForColorCode(i);
-                      setShowColorCodeModal(true);
-                    }}
-                    style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#374151',
-                      color: 'white',
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '11px'
-                    }}
-                  >
-                    NCS/RAL
-                  </button>
+        
+        <div style={styles.sidebarContent}>
+          {mode === "custom" && (
+            <>
+              {/* Canvas Settings Section */}
+              <div style={styles.section}>
+                <div 
+                  style={styles.sectionHeader}
+                  onClick={() => toggleSection('canvas')}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <span>📐 Canvas Settings</span>
+                  <span>{expandedSections.canvas ? '▼' : '▶'}</span>
                 </div>
-              ))}
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              Grout width (cm):{" "}
-              <input
-                type="number"
-                value={groutWidth}
-                onChange={(e) => setGroutWidth(Math.max(0, Number(e.target.value)))}
-                min={0}
-                max={2}
-                step={0.05}
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              Grout color:{" "}
-              <input
-                type="color"
-                value={groutColor}
-                onChange={(e) => setGroutColor(e.target.value)}
-                style={{ marginLeft: '8px' }}
-              />
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={showGrid}
-                  onChange={(e) => setShowGrid(e.target.checked)}
-                />{" "}
-                Show grid
-              </label>
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              <div>Symmetry Type:</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                <label>
-                  <input
-                    type="radio"
-                    value="none"
-                    checked={symmetryType === 'none'}
-                    onChange={(e) => setSymmetryType(e.target.value)}
-                  /> None
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    value="horizontal"
-                    checked={symmetryType === 'horizontal'}
-                    onChange={(e) => setSymmetryType(e.target.value)}
-                  /> Horizontal
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    value="vertical"
-                    checked={symmetryType === 'vertical'}
-                    onChange={(e) => setSymmetryType(e.target.value)}
-                  /> Vertical
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    value="central"
-                    checked={symmetryType === 'central'}
-                    onChange={(e) => setSymmetryType(e.target.value)}
-                  /> Central (4-way)
-                </label>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ marginBottom: '12px' }}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isEditMode}
-                    onChange={(e) => setIsEditMode(e.target.checked)}
-                  />{" "}
-                  Edit Mode (click tiles to color)
-                </label>
-              </div>
-              
-              {isEditMode && (
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ marginBottom: '8px' }}>Select color for painting:</div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {customPalette.map((color, index) => (
-                      <div
-                        key={index}
-                        onClick={() => setSelectedMainColor(index)}
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          backgroundColor: color,
-                          border: selectedMainColor === index ? '3px solid #000' : '1px solid #ccc',
-                          cursor: 'pointer',
-                          borderRadius: '4px'
+                {expandedSections.canvas && (
+                  <div style={styles.sectionContent}>
+                    <div style={styles.inputGroup}>
+                      <label style={styles.label}>Room Width (cm)</label>
+                      <input
+                        type="number"
+                        value={roomWidthCm}
+                        onChange={(e) => setRoomWidthCm(Number(e.target.value))}
+                        min={1}
+                        style={styles.input}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = styles.inputFocus.borderColor;
+                          e.target.style.boxShadow = styles.inputFocus.boxShadow;
                         }}
-                        title={`Tile ${index + 1}`}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }}
                       />
-                    ))}
+                    </div>
+                    <div style={styles.inputGroup}>
+                      <label style={styles.label}>Room Height (cm)</label>
+                      <input
+                        type="number"
+                        value={roomHeightCm}
+                        onChange={(e) => setRoomHeightCm(Number(e.target.value))}
+                        min={1}
+                        style={styles.input}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = styles.inputFocus.borderColor;
+                          e.target.style.boxShadow = styles.inputFocus.boxShadow;
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                    <div style={styles.inputGroup}>
+                      <label style={styles.label}>Tile Size (cm)</label>
+                      <input
+                        type="number"
+                        value={tileSizeCm}
+                        onChange={(e) => setTileSizeCm(Number(e.target.value))}
+                        min={1}
+                        style={styles.input}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = styles.inputFocus.borderColor;
+                          e.target.style.boxShadow = styles.inputFocus.boxShadow;
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                    Symmetry ({symmetryType}) will be applied when coloring tiles
-                  </div>
-                  {previousMosaicPattern && (
-                    <button
-                      onClick={undoLastMosaicPaint}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        borderRadius: '4px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        marginTop: '8px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Undo Last Paint
-                    </button>
-                  )}
-                </div>
-              )}
-              
-              
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  onClick={newLayout}
-                  style={{ padding: '8px 12px', backgroundColor: '#16a34a', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-                >
-                  New Layout
-                </button>
-                <button
-                  onClick={() => setShowPatternModal(true)}
-                  style={{ padding: '8px 12px', backgroundColor: '#9333ea', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-                >
-                  Design Pattern
-                </button>
-                <button
-                  onClick={exportPNG}
-                  style={{ padding: '8px 12px', backgroundColor: '#2563eb', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-                >
-                  Export PNG
-                </button>
+                )}
               </div>
-            </div>
-          </>
-        )}
+
+              {/* Color Palette Section */}
+              <div style={styles.section}>
+                <div 
+                  style={styles.sectionHeader}
+                  onClick={() => toggleSection('palette')}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <span>🎨 Color Palette</span>
+                  <span>{expandedSections.palette ? '▼' : '▶'}</span>
+                </div>
+                {expandedSections.palette && (
+                  <div style={styles.sectionContent}>
+                    <div style={styles.inputGroup}>
+                      <label style={styles.label}>Number of Colors</label>
+                      <input
+                        type="number"
+                        value={tileCount}
+                        min={1}
+                        onChange={(e) => {
+                          const count = Number(e.target.value);
+                          setTileCount(count);
+                          setCustomPalette(Array(count).fill("#cccccc"));
+                        }}
+                        style={styles.input}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = styles.inputFocus.borderColor;
+                          e.target.style.boxShadow = styles.inputFocus.boxShadow;
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                    
+                    <div style={{ marginTop: '12px' }}>
+                      <label style={styles.label}>Color Selection</label>
+                      {Array.from({ length: tileCount }, (_, i) => (
+                        <div key={i} style={{ 
+                          marginTop: '8px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '8px',
+                          padding: '8px',
+                          backgroundColor: 'white',
+                          borderRadius: '6px',
+                          border: '1px solid #e5e7eb'
+                        }}>
+                          <span style={{ fontSize: '13px', color: '#6b7280', minWidth: '50px' }}>
+                            Color {i + 1}
+                          </span>
+                          <input
+                            type="color"
+                            value={customPalette[i] || "#cccccc"}
+                            onChange={(e) => {
+                              const newPalette = [...customPalette];
+                              newPalette[i] = e.target.value;
+                              setCustomPalette(newPalette);
+                            }}
+                            style={{
+                              width: '40px',
+                              height: '32px',
+                              borderRadius: '4px',
+                              border: '1px solid #d1d5db',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <button
+                            onClick={() => {
+                              setSelectedTileForColorCode(i);
+                              setShowColorCodeModal(true);
+                            }}
+                            style={{
+                              ...styles.button,
+                              padding: '4px 10px',
+                              backgroundColor: styles.colors.neutralDark,
+                              color: 'white',
+                              fontSize: '12px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#1f2937';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = styles.colors.neutralDark;
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            NCS/RAL
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Design Options Section */}
+              <div style={styles.section}>
+                <div 
+                  style={styles.sectionHeader}
+                  onClick={() => toggleSection('design')}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <span>⚙️ Design Options</span>
+                  <span>{expandedSections.design ? '▼' : '▶'}</span>
+                </div>
+                {expandedSections.design && (
+                  <div style={styles.sectionContent}>
+                    <div style={styles.inputGroup}>
+                      <label style={styles.label}>Grout Width (cm)</label>
+                      <input
+                        type="number"
+                        value={groutWidth}
+                        onChange={(e) => setGroutWidth(Math.max(0, Number(e.target.value)))}
+                        min={0}
+                        max={2}
+                        step={0.05}
+                        style={styles.input}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = styles.inputFocus.borderColor;
+                          e.target.style.boxShadow = styles.inputFocus.boxShadow;
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                    
+                    <div style={styles.inputGroup}>
+                      <label style={styles.label}>Grout Color</label>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          type="color"
+                          value={groutColor}
+                          onChange={(e) => setGroutColor(e.target.value)}
+                          style={{
+                            width: '60px',
+                            height: '36px',
+                            borderRadius: '6px',
+                            border: '1px solid #d1d5db',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span style={{ fontSize: '12px', color: '#6b7280' }}>{groutColor}</span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ ...styles.inputGroup, marginTop: '16px' }}>
+                      <label style={{ ...styles.label, marginBottom: '8px' }}>Symmetry Type</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {[
+                          { value: 'none', label: '◻ None', desc: 'Random placement' },
+                          { value: 'horizontal', label: '↔️ Horizontal', desc: 'Mirror left-right' },
+                          { value: 'vertical', label: '↕️ Vertical', desc: 'Mirror top-bottom' },
+                          { value: 'central', label: '✦ Central', desc: '4-way symmetry' }
+                        ].map(option => (
+                          <label key={option.value} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '8px',
+                            backgroundColor: symmetryType === option.value ? '#eff6ff' : 'white',
+                            border: `1px solid ${symmetryType === option.value ? '#3b82f6' : '#e5e7eb'}`,
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}>
+                            <input
+                              type="radio"
+                              value={option.value}
+                              checked={symmetryType === option.value}
+                              onChange={(e) => setSymmetryType(e.target.value)}
+                              style={{ marginRight: '8px' }}
+                            />
+                            <div>
+                              <div style={{ fontSize: '14px', fontWeight: '500' }}>{option.label}</div>
+                              <div style={{ fontSize: '11px', color: '#6b7280' }}>{option.desc}</div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div style={{ marginTop: '12px' }}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={showGrid}
+                          onChange={(e) => setShowGrid(e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        Show Grid Lines
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Edit Tools Section */}
+              <div style={styles.section}>
+                <div 
+                  style={styles.sectionHeader}
+                  onClick={() => toggleSection('edit')}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <span>🖌️ Edit Tools</span>
+                  <span>{expandedSections.edit ? '▼' : '▶'}</span>
+                </div>
+                {expandedSections.edit && (
+                  <div style={styles.sectionContent}>
+                    <label style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '10px',
+                      backgroundColor: isEditMode ? '#eff6ff' : '#f9fafb',
+                      border: `2px solid ${isEditMode ? '#3b82f6' : '#e5e7eb'}`,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '12px'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isEditMode}
+                        onChange={(e) => setIsEditMode(e.target.checked)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: '500' }}>
+                          Edit Mode {isEditMode && '✓'}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                          Click and drag to paint tiles
+                        </div>
+                      </div>
+                    </label>
+                    
+                    {isEditMode && (
+                      <>
+                        <div style={{ marginBottom: '12px' }}>
+                          <label style={styles.label}>Select Paint Color</label>
+                          <div style={{ 
+                            display: 'flex', 
+                            gap: '8px', 
+                            flexWrap: 'wrap',
+                            padding: '12px',
+                            backgroundColor: 'white',
+                            borderRadius: '6px',
+                            border: '1px solid #e5e7eb'
+                          }}>
+                            {customPalette.map((color, index) => (
+                              <div
+                                key={index}
+                                onClick={() => setSelectedMainColor(index)}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'scale(1.1)';
+                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                  e.currentTarget.style.boxShadow = selectedMainColor === index ? '0 0 0 2px white, 0 0 0 4px #3b82f6' : 'none';
+                                }}
+                                style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  backgroundColor: color,
+                                  border: selectedMainColor === index ? '3px solid #3b82f6' : '2px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: selectedMainColor === index ? '0 0 0 2px white, 0 0 0 4px #3b82f6' : 'none'
+                                }}
+                                title={`Color ${index + 1}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#fef3c7',
+                          border: '1px solid #fbbf24',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          color: '#92400e',
+                          marginBottom: '12px'
+                        }}>
+                          💡 Symmetry mode: <strong>{symmetryType}</strong>
+                        </div>
+                        
+                        {previousMosaicPattern && (
+                          <button
+                            onClick={undoLastMosaicPaint}
+                            style={{
+                              ...styles.button,
+                              ...styles.buttonDanger,
+                              width: '100%',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => {
+                              Object.assign(e.currentTarget.style, styles.buttonDangerHover);
+                            }}
+                            onMouseLeave={(e) => {
+                              Object.assign(e.currentTarget.style, styles.buttonDanger);
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            ↩️ Undo Last Paint
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions Section */}
+              <div style={styles.section}>
+                <div 
+                  style={styles.sectionHeader}
+                  onClick={() => toggleSection('actions')}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.sectionHeaderHover.backgroundColor}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <span>💾 Actions</span>
+                  <span>{expandedSections.actions ? '▼' : '▶'}</span>
+                </div>
+                {expandedSections.actions && (
+                  <div style={styles.sectionContent}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button
+                        onClick={newLayout}
+                        style={{
+                          ...styles.button,
+                          ...styles.buttonSuccess,
+                          justifyContent: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          Object.assign(e.currentTarget.style, styles.buttonSuccessHover);
+                        }}
+                        onMouseLeave={(e) => {
+                          Object.assign(e.currentTarget.style, styles.buttonSuccess);
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        🎲 Generate New Layout
+                      </button>
+                      
+                      <button
+                        onClick={() => setShowPatternModal(true)}
+                        style={{
+                          ...styles.button,
+                          ...styles.buttonSecondary,
+                          justifyContent: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          Object.assign(e.currentTarget.style, styles.buttonSecondaryHover);
+                        }}
+                        onMouseLeave={(e) => {
+                          Object.assign(e.currentTarget.style, styles.buttonSecondary);
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        🎨 Design Custom Pattern
+                      </button>
+                      
+                      <button
+                        onClick={exportPNG}
+                        style={{
+                          ...styles.button,
+                          ...styles.buttonPrimary,
+                          justifyContent: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          Object.assign(e.currentTarget.style, styles.buttonPrimaryHover);
+                        }}
+                        onMouseLeave={(e) => {
+                          Object.assign(e.currentTarget.style, styles.buttonPrimary);
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        📥 Export as PNG
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Podgląd po prawej - 80% */}
-      <div ref={containerRef} style={{ width: '80%', backgroundColor: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
-        <div style={{ display: 'inline-block' }}>
-          <canvas 
-            ref={previewRef} 
-            style={{ 
-              border: '1px solid #ccc', 
-              display: 'block',
-              cursor: isEditMode ? 'crosshair' : 'default'
-            }} 
-            onClick={handleMainTileClick}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          />
+      {/* Canvas Area */}
+      <div style={styles.canvas}>
+        <div style={styles.canvasHeader}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '18px', color: '#111827' }}>Preview</h2>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6b7280' }}>
+              {roomWidthCm}cm × {roomHeightCm}cm • {tileSizeCm}cm tiles
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {isRegenerating && (
+              <span style={{
+                padding: '4px 12px',
+                backgroundColor: '#fef3c7',
+                color: '#92400e',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '500'
+              }}>
+                ⏳ Updating...
+              </span>
+            )}
+            {isEditMode && (
+              <span style={{
+                padding: '4px 12px',
+                backgroundColor: '#dcfce7',
+                color: '#166534',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '500'
+              }}>
+                🖌️ Edit Mode Active
+              </span>
+            )}
+          </div>
+        </div>
+        <div ref={containerRef} style={styles.canvasContent}>
+          <div style={{ display: 'inline-block' }}>
+            <canvas 
+              ref={previewRef} 
+              style={{ 
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                display: 'block',
+                cursor: isEditMode ? 'crosshair' : 'default',
+                backgroundColor: 'white',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+              }} 
+              onClick={handleMainTileClick}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            />
+          </div>
         </div>
       </div>
       
